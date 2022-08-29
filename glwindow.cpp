@@ -132,7 +132,7 @@ GLWindow::GLWindow()
     //m_segmentation_image = QString("/home/tukur/Documents/QT_Projects/spider-viewer4/VR_app/scene1/scene1_seg.png");
 
 
-    m_obj_file = QString("VR_app/Koltuk_tri.obj");
+    m_obj_file = QString("VR_app/TableAndChairs-filt.obj");
 #endif
     m_eye = QVector3D(0.0,0.0,0.0);
     m_world.setToIdentity();
@@ -658,7 +658,7 @@ void GLWindow::draw_scene(const QVector3D& eye, const QVector3D& target, bool em
     m_program->release();
     m_vao->release();
     if (empty && m_draw_cube_enabled && m_depth_enabled) draw_cube(camera, QVector3D(50.0,-100.0,-400.0f), QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(50.0f, 50.0f, 50.0f) );
-    if (empty && m_draw_obj_enabled && m_depth_enabled) draw_obj(camera, QVector3D(0.0,-100.0,-450.0f), QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(100.0f, 100.0f, 100.0f) );
+    if (empty && m_draw_obj_enabled && m_depth_enabled) draw_obj(camera, QVector3D(0.0,-100.0,-150.0f), QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(1.0f, 1.0f, 1.0f) );
 
     //f->glDrawArraysInstanced(GL_TRIANGLES, 0, m_logo.vertexCount(), 32 * 36);
 
@@ -845,6 +845,8 @@ void GLWindow::init_obj(const QVector3D& c) {
 
 }
 
+
+// Read obj file containing meshes
 
 void GLWindow::import_obj(const QString &fname, std::vector<float>& v, std::vector<float>& vn,
                           std::vector<int>& idx) {
