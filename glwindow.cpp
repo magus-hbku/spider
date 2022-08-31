@@ -164,6 +164,7 @@ GLWindow::GLWindow()
     m_depth_enabled = false;
     m_draw_cube_enabled = false;
     m_draw_obj_enabled = false;
+    m_object_position = QVector3D(0.0f,-153.237,-250.0f);
 
     m_viewport_width = 1200;
     m_viewport_height = 800;
@@ -657,8 +658,10 @@ void GLWindow::draw_scene(const QVector3D& eye, const QVector3D& target, bool em
     m_vbo->release();
     m_program->release();
     m_vao->release();
+
+    // The position of the object is a new field, called m_object_position
     if (empty && m_draw_cube_enabled && m_depth_enabled) draw_cube(camera, QVector3D(50.0,-100.0,-400.0f), QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(50.0f, 50.0f, 50.0f) );
-    if (empty && m_draw_obj_enabled && m_depth_enabled) draw_obj(camera, QVector3D(0.0,-100.0,-150.0f), QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(1.0f, 1.0f, 1.0f) );
+    if (empty && m_draw_obj_enabled && m_depth_enabled) draw_obj(camera, m_object_position, QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(1.0f, 1.0f, 1.0f) );
 
     //f->glDrawArraysInstanced(GL_TRIANGLES, 0, m_logo.vertexCount(), 32 * 36);
 
@@ -1080,11 +1083,20 @@ void GLWindow::reset_camera() {
 
 
 void GLWindow::mousePressEvent(QMouseEvent *ev) {
+
    if (ev->button() == Qt::LeftButton) {
         if ( m_mixed_view_enabled && ev->modifiers() == Qt::ControlModifier) {
            pick(ev->pos());
         } else {
-           m_mouse_pressed = true;
+           // if the position is inside the inset
+           // we set a new flag that is moving_object
+           int x  = ev->pos().x();
+           int y  = ev->pos().y();
+           if (m_depth_inset_enabled && x > (3 * m_viewport_width / 4) && y < m_viewport_height /2 ) {
+               m_object_moving = true;
+           } else {
+               m_mouse_pressed = true;
+           }
            m_mouse_start = ev->pos();
        }
    }
@@ -1097,12 +1109,27 @@ void GLWindow::mousePressEvent(QMouseEvent *ev) {
 void GLWindow::mouseReleaseEvent(QMouseEvent* ev) {
    if (ev->button() == Qt::LeftButton) {
         m_mouse_pressed = false;
+        m_object_moving = false;
     }
 }
 
 
 void GLWindow::mouseMoveEvent(QMouseEvent* ev) {
 
+
+    // if moving object
+    // ev conatins the new pos of the mouse
+    // you can compute the difference
+    // QPoint delta = ev->pos() - m_mouse_start;
+    // this becomes a displacement for the object
+    // m_object_position += QVector3D(delta[0],delta[1],0.0f);
+
+    if (m_object_moving) {
+        const float K = 0.005f;
+        QPoint delta = ev->pos() - m_mouse_start;
+        m_object_position += K * QVector3D( delta.x(), 0.0f, delta.y());
+        qDebug() << "Object position: " << m_object_position;
+    }
 
     if (m_mouse_pressed) {
         const float pi = 3.1415f;
@@ -1296,7 +1323,9 @@ void GLWindow::draw_mixed_view() {
         //glViewport(m_viewport_width/4,m_viewport_height/2,m_viewport_width/4, m_viewport_height/2);
         //tdraw_scene(m_eye,m_target, false, true, false);
         glViewport(3 * m_viewport_width/4,m_viewport_height/2,m_viewport_width/4, m_viewport_height/2);
-        draw_scene(m_eye,m_target, true, true, false);
+        QVector3D from_ceiling = QVector3D(3.68022, 687.653, 223.43);
+        QVector3D to_floor = QVector3D(-0.00508986, -0.951045, -0.30901);
+        draw_scene(from_ceiling,to_floor, true, true, false);
     }
 }
 
@@ -1315,4 +1344,8 @@ void GLWindow::draw_mixed_view_norm() {
         glViewport(3 * m_viewport_width/4,m_viewport_height/2,m_viewport_width/4, m_viewport_height/2);
         draw_scene_norm(m_eye,m_target, true, true, false);
     }
+    // Moving enabled flag
+    // Draw another viewport on the left
+    // glViewport(0,0,   m_viewport_width/4, m_viewport_height/2);
+    // draw_scene_from_above --> draw_scene_norm( QVector3D(0.0,1.0,0.0), QVector3D(0.0,0.0,0.0), rest of flags)
 }

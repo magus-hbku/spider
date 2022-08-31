@@ -139,7 +139,9 @@ protected:
     textured_sphere_map  m_sphere_map;
 
     bool m_mouse_pressed;
+    bool m_object_moving;
     QPoint m_mouse_start;
+    QVector3D m_object_position;
 
     // Environment
     bool m_stereo_enabled;
@@ -157,6 +159,7 @@ protected:
     bool m_draw_cube_enabled;
     bool m_draw_obj_enabled;
     bool m_depth_inset_enabled;
+
 
     float m_eye_separation_cm;
     float m_sphere_radius_cm;
