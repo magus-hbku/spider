@@ -127,7 +127,7 @@ protected:
     QString m_rgb_image_empty;
 
     QString m_rgb_image_norm;
-
+    QString m_rgb_image_norm_empty;
 
     QString m_rgb_image_emptyr;
     QString m_depth_image;
@@ -156,6 +156,7 @@ protected:
     bool m_mixed_view_enabled;
     bool m_mixed_view_norm_enabled;
     bool m_depth_enabled;
+    bool m_normal_enabled;
     bool m_draw_cube_enabled;
     bool m_draw_obj_enabled;
     bool m_depth_inset_enabled;
@@ -186,8 +187,8 @@ protected:
     QOpenGLTexture *m_texture_rgb_empty;
 
     QOpenGLTexture *m_texture_rgb_norm;
+    QOpenGLTexture *m_texture_rgb_norm_empty;
 
-    QOpenGLTexture *m_texture_rgb_emptyr;
 
     QOpenGLTexture *m_texture_depth;
     QOpenGLTexture *m_texture_depth_empty;
@@ -216,10 +217,11 @@ protected:
     int m_worldMatrixLoc;
     int m_lightPosLoc;
     int m_enableLightingLoc;
+    int m_fillLoc;
     int m_depthEnabledLoc;
     int m_textureEnabledLoc;
     int m_blendFactorLoc;
-    int m_depthColorLoc;
+    int m_normalEnabledLoc;
 
     int m_depthMaxLoc;
     int m_pickedObjectCount;

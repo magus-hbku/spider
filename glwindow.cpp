@@ -77,7 +77,7 @@ GLWindow::GLWindow()
       m_texture_rgb_empty(0),
       m_texture_rgb_norm(0),
 
-      m_texture_rgb_emptyr(0),
+      m_texture_rgb_norm_empty(0),
 
       m_texture_depth(0),
       m_texture_depth_empty(0),
@@ -114,12 +114,15 @@ GLWindow::GLWindow()
     m_vertex_shader = QString("spider.vert");
     m_fragment_shader = QString("spider.frag");
 
-    m_rgb_image = QString("VR_app/scene_03280_1000658_full.png");
-    m_rgb_image_empty = QString("VR_app/scene_03280_1000658pred.png");
-    m_depth_image = QString("VR_app/scene_03280_1000658_full_depth.png");
-    m_depth_image_empty = QString("VR_app/scene_03280_1000658_empty_depth.png");
-    m_segmentation_image = QString("VR_app/scene_03280_1000658_seg.png");
-    m_rgb_image_norm = QString("VR_app/normal.png");
+    QString scene = "55705";
+
+    m_rgb_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/rgb_warmlight.png");
+    m_rgb_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/rgb_warmlight.png");
+    m_depth_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/depth.png");
+    m_depth_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/depth.png");
+    m_segmentation_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/semantic.png");
+    m_rgb_image_norm = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/normal.png");
+    m_rgb_image_norm_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/normal.png");
 
 
     //m_rgb_image = QString("/home/tukur/Documents/QT_Projects/spider-viewer4/VR_app/scene1/scene1_full.png");
@@ -155,6 +158,7 @@ GLWindow::GLWindow()
 
     m_draw_empty_enabled = false;
     m_draw_norm_enabled = false;
+    m_normal_enabled = false;
 
     m_mixed_view_enabled =  false;
     m_mixed_view_norm_enabled = false;
@@ -186,12 +190,13 @@ GLWindow::GLWindow()
     m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/Exp_results/experiment2/exp2.4_500steps_optimized"));
     m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/Exp_results/experiment2/exp2.5_1ksteps_optimized"));
     m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/Exp_results/experiment2/exp2.6_10ksteps_optimized"));
-//#else
-    m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/selected/scene_03280_1000658"));
-    m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/selected/scene_03310_141"));
-    m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/selected/scene_03380_795"));
-    m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/selected/scene_03419_1008755"));
-    m_scene_list.push_back( QString("/home/tukur/Documents/QT_Projects/spider-viewer/selected/scene_03427_997175"));
+#else
+    m_scene_list.push_back( QString("55705"));
+    m_scene_list.push_back( QString("55706"));
+    m_scene_list.push_back( QString("55707"));
+    m_scene_list.push_back( QString("55708"));
+    m_scene_list.push_back( QString("55709"));
+    m_scene_list.push_back( QString("55710"));
 #endif
     m_current_scene = 0;
 
@@ -229,7 +234,7 @@ GLWindow::~GLWindow()
     if (m_texture_rgb_empty) delete m_texture_rgb_empty;
 
     if (m_texture_rgb_norm) delete m_texture_rgb_norm;
-    if (m_texture_rgb_emptyr) delete m_texture_rgb_emptyr;
+    if (m_texture_rgb_norm_empty) delete m_texture_rgb_norm_empty;
 
     if (m_texture_depth) delete m_texture_depth;
     if (m_texture_depth_empty) delete m_texture_depth_empty;
@@ -270,13 +275,15 @@ QByteArray versionedShaderCode(const QString& filename)
 }
 
 
-void GLWindow::load_scene(const QString& scene_name)
+void GLWindow::load_scene(const QString& scene)
 {
-
-    m_rgb_image = scene_name + QString("_full.png");
-    m_rgb_image_empty = scene_name + QString("pred.png");
-    m_rgb_image_norm = scene_name + QString("normal.png");
-    m_rgb_image_emptyr = scene_name + QString("predr.png");
+    m_rgb_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/rgb_warmlight.png");
+    m_rgb_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/rgb_warmlight.png");
+    m_depth_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/depth.png");
+    m_depth_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/depth.png");
+    m_segmentation_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/semantic.png");
+    m_rgb_image_norm = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/normal.png");
+    m_rgb_image_norm_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/normal.png");
 
     //initializeTexture(m_texture_rgb,m_rgb_image);
     if (m_texture_rgb) {
@@ -286,10 +293,8 @@ void GLWindow::load_scene(const QString& scene_name)
 
     QImage img(m_rgb_image);
     Q_ASSERT(!img.isNull());
-    qDebug() << "read image in  " << m_rgb_image;
+    qDebug() << "read RGB full image in  " << m_rgb_image;
     m_texture_rgb = new QOpenGLTexture(img.mirrored());
-
-
 
     if (m_texture_rgb_empty) {
         delete m_texture_rgb_empty;
@@ -297,11 +302,9 @@ void GLWindow::load_scene(const QString& scene_name)
     }
 
     QImage img_empty(m_rgb_image_empty);
-    Q_ASSERT(!img.isNull());
-    qDebug() << "read image in  " << m_rgb_image_empty;
+    Q_ASSERT(!img_empty.isNull());
+    qDebug() << "read RGB norm image in  " << m_rgb_image_empty;
     m_texture_rgb_empty = new QOpenGLTexture(img_empty.mirrored());
-
-
 
 
 
@@ -311,25 +314,72 @@ void GLWindow::load_scene(const QString& scene_name)
     }
 
     QImage img_norm(m_rgb_image_norm);
-    Q_ASSERT(!img.isNull());
-    qDebug() << "read image in  " << m_rgb_image_norm;
+    Q_ASSERT(!img_norm.isNull());
+    qDebug() << "read RGB norm image in  " << m_rgb_image_norm;
     m_texture_rgb_norm = new QOpenGLTexture(img_norm.mirrored());
 
 
 
 
-
-    //************load scene
-    if (m_texture_rgb_emptyr) {
-        delete m_texture_rgb_empty;
-        m_texture_rgb_empty = 0;
+    //******* initialize
+    if (m_texture_rgb_norm_empty) {
+        delete m_texture_rgb_norm_empty;
+        m_texture_rgb_norm_empty = 0;
     }
 
-    QImage img_emptyr(m_rgb_image_emptyr);
-    Q_ASSERT(!img.isNull());
-    qDebug() << "read image in  " << m_rgb_image_emptyr;
-    m_texture_rgb_emptyr = new QOpenGLTexture(img_empty.mirrored());
-    //***************
+    QImage img_empty_norm(m_rgb_image_norm_empty);
+    Q_ASSERT(!img_empty_norm.isNull());
+    qDebug() << "read RGB empty norm image in  " << m_rgb_image_norm_empty;
+    m_texture_rgb_norm_empty = new QOpenGLTexture(img_empty_norm.mirrored());
+    //********
+
+
+
+    // Depth images
+    if (m_texture_depth) {
+        delete m_texture_depth;
+        m_texture_depth = 0;
+    }
+
+    QImage img_depth(m_depth_image);
+    Q_ASSERT(!img_depth.isNull());
+    qDebug() << "read depth full image in  " << m_depth_image;
+
+    m_texture_depth = new QOpenGLTexture(QOpenGLTexture::Target2D);
+    m_texture_depth->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+
+    // given some `width`, `height` and `data_ptr`
+    m_texture_depth->setSize(img_depth.width(), img_depth.height(), 1);
+    m_texture_depth->setFormat(QOpenGLTexture::D16);
+    m_texture_depth->allocateStorage();
+    m_texture_depth->setData(QOpenGLTexture::Depth, QOpenGLTexture::UInt16, (const void *)img_depth.mirrored().bits());
+    m_texture_depth->create();
+
+    if (m_texture_depth_empty) {
+        delete m_texture_depth_empty;
+        m_texture_depth_empty = 0;
+    }
+
+    QImage img_depth_empty(m_depth_image_empty);
+    Q_ASSERT(!img_depth_empty.isNull());
+    qDebug() << "read depth empty image in  " << m_depth_image_empty;
+    m_texture_depth_empty = new QOpenGLTexture(img_depth_empty.mirrored());
+
+    // Load segmentation image
+    if (m_seg_image) {
+        delete m_seg_image;
+        m_seg_image = 0;
+    }
+
+    m_seg_image = new QImage(m_segmentation_image);
+    Q_ASSERT(!m_seg_image->isNull());
+    qDebug() << "read segmentation image in  " << m_segmentation_image;
+    if (m_texture_segmentation) {
+        delete m_texture_segmentation;
+        m_texture_segmentation = 0;
+    }
+    m_texture_segmentation = new QOpenGLTexture(m_seg_image->mirrored());
+
 
 }
 
@@ -377,15 +427,15 @@ void GLWindow::initializeGL()
 
 
     //******* initialize
-    if (m_texture_rgb_emptyr) {
-        delete m_texture_rgb_emptyr;
-        m_texture_rgb_emptyr = 0;
+    if (m_texture_rgb_norm_empty) {
+        delete m_texture_rgb_norm_empty;
+        m_texture_rgb_norm_empty = 0;
     }
 
-    QImage img_emptyr(m_rgb_image_emptyr);
-    Q_ASSERT(!img_empty.isNull());
-    qDebug() << "read RGB empty image in  " << m_rgb_image_emptyr;
-    m_texture_rgb_emptyr = new QOpenGLTexture(img_empty.mirrored());
+    QImage img_empty_norm(m_rgb_image_norm_empty);
+    Q_ASSERT(!img_empty_norm.isNull());
+    qDebug() << "read RGB empty norm image in  " << m_rgb_image_norm_empty;
+    m_texture_rgb_norm_empty = new QOpenGLTexture(img_empty_norm.mirrored());
     //********
 
 
@@ -453,13 +503,14 @@ void GLWindow::initializeGL()
     m_worldMatrixLoc = m_program->uniformLocation("worldMatrix");
     m_lightPosLoc = m_program->uniformLocation("lightPos");
     m_enableLightingLoc = m_program->uniformLocation("enableLighting");
+    m_fillLoc = m_program->uniformLocation("full");
     m_depthEnabledLoc = m_program->uniformLocation("depthEnabled");
     m_textureEnabledLoc = m_program->uniformLocation("textureEnabled");
     m_depthMaxLoc = m_program->uniformLocation("depthMax");
     m_pickedObjectCount = m_program->uniformLocation("pickedObjectCount");
     m_pickColors = m_program->uniformLocation("pickColor");
     m_blendFactorLoc = m_program->uniformLocation("blendFactor");
-    m_depthColorLoc = m_program->uniformLocation("depthColor");
+    m_normalEnabledLoc = m_program->uniformLocation("normalEnabled");
 
     // Create a VAO. Not strictly required for ES 3, but it is for plain OpenGL.
 
@@ -603,29 +654,33 @@ void GLWindow::draw_scene(const QVector3D& eye, const QVector3D& target, bool em
     }
 
 #endif
-    QOpenGLTexture* tex = empty ? m_texture_rgb_empty : m_texture_rgb;
+    //QOpenGLTexture* tex = empty ? m_texture_rgb_empty : m_texture_rgb;
 
     //QOpenGLTexture* tex_norm = norm ? m_texture_rgb_norm : m_texture_rgb;                   //???
 
-    QOpenGLTexture* tex_depth = empty ? m_texture_depth_empty : m_texture_depth;
+    //QOpenGLTexture* tex_depth = empty ? m_texture_depth_empty : m_texture_depth;
     m_vao->bind();
     m_program->bind();
     m_vbo->bind();
     m_ibo->bind();
 
-    tex->bind(0);
-    tex_depth->bind(1);
-    m_texture_segmentation->bind(2);
-    m_texture_rgb->bind(3);
+    m_texture_rgb->bind(0);
+    m_texture_depth->bind(1);
+    m_texture_rgb_empty->bind(2);
+    m_texture_depth_empty->bind(3);
+    m_texture_rgb_norm->bind(4);
+    m_texture_rgb_norm_empty->bind(5);
+    m_texture_segmentation->bind(6);
 
     m_world.setToIdentity();
     QMatrix4x4 camera;
     camera.lookAt(eye,  target, QVector3D(0, 1, 0));
     m_program->setUniformValue(m_projMatrixLoc, m_proj);
+    m_program->setUniformValue(m_fillLoc, empty?0:1 );
     m_program->setUniformValue(m_depthEnabledLoc, (m_depth_enabled?1:0));
     m_program->setUniformValue(m_textureEnabledLoc, 1);
     m_program->setUniformValue(m_depthMaxLoc, m_sphere_radius_cm);
-    m_program->setUniformValue(m_depthColorLoc, depth_inset ? 1 : 0);
+    m_program->setUniformValue(m_normalEnabledLoc, m_normal_enabled ? 1 : 0);
     m_program->setUniformValue(m_camMatrixLoc, camera);
     m_program->setUniformValue(m_worldMatrixLoc, m_world);
     m_program->setUniformValue(m_lightPosLoc, QVector3D(0, 200.0, 0.0f));
@@ -650,10 +705,14 @@ void GLWindow::draw_scene(const QVector3D& eye, const QVector3D& target, bool em
 
     //glBindVertexArray( 0 );
 
-    tex->release(0);
-    tex_depth->release(1);
-    m_texture_segmentation->release(2);
-    m_texture_rgb->release(3);
+    m_texture_rgb->release(0);
+    m_texture_depth->release(1);
+    m_texture_rgb_empty->release(2);
+    m_texture_depth_empty->release(3);
+    m_texture_rgb_norm->release(4);
+    m_texture_rgb_norm_empty->release(5);
+    m_texture_segmentation->release(6);
+
     m_ibo->release();
     m_vbo->release();
     m_program->release();
@@ -732,7 +791,7 @@ void GLWindow::draw_scene_norm(const QVector3D& eye, const QVector3D& target, bo
     m_program->setUniformValue(m_depthEnabledLoc, (m_depth_enabled?1:0));
     m_program->setUniformValue(m_textureEnabledLoc, 1);
     m_program->setUniformValue(m_depthMaxLoc, m_sphere_radius_cm);
-    m_program->setUniformValue(m_depthColorLoc, depth_inset ? 1 : 0);
+    //m_program->setUniformValue(m_depthColorLoc, depth_inset ? 1 : 0);
     m_program->setUniformValue(m_camMatrixLoc, camera);
     m_program->setUniformValue(m_worldMatrixLoc, m_world);
     m_program->setUniformValue(m_lightPosLoc, QVector3D(0, 200.0, 0.0f));
@@ -1262,7 +1321,7 @@ void GLWindow::keyPressEvent(QKeyEvent *ev) {
         } break;
 
         case Qt::Key_N: {
-            m_draw_norm_enabled = !m_draw_norm_enabled;
+            m_normal_enabled = !m_normal_enabled;
         } break;
     case Qt::Key_Home: {
         reset_camera();
