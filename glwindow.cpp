@@ -116,8 +116,8 @@ GLWindow::GLWindow()
 
     QString scene = "55705";
 
-    m_rgb_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/rgb_warmlight.png");
-    m_rgb_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/rgb_warmlight.png");
+    m_rgb_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/rgb_rawlight.png");
+    m_rgb_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/rgb_rawlight.png");
     m_depth_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/depth.png");
     m_depth_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/depth.png");
     m_segmentation_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/semantic.png");
@@ -154,6 +154,8 @@ GLWindow::GLWindow()
     m_stereo_norm_enabled = true;
     m_wireframe_enabled = false;
 
+    m_signal = 0;
+
     m_pointcloud_enabled = false;
 
     m_draw_empty_enabled = false;
@@ -169,13 +171,14 @@ GLWindow::GLWindow()
     m_draw_cube_enabled = false;
     m_draw_obj_enabled = false;
     m_object_position = QVector3D(0.0f,-153.237,-250.0f);
+    //m_object_position = QVector3D(0.0f,-100.0f,-250.0f);
 
     m_viewport_width = 1200;
     m_viewport_height = 800;
 
-    m_fov = 80.0f;
+    m_fov = 60.0f;
     m_near = 0.1f;
-    m_far = 10000.0f;
+    m_far = 100000.0f;
     m_point_size = 3.0f;
 
     m_picked_object_count = 0;
@@ -277,8 +280,8 @@ QByteArray versionedShaderCode(const QString& filename)
 
 void GLWindow::load_scene(const QString& scene)
 {
-    m_rgb_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/rgb_warmlight.png");
-    m_rgb_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/rgb_warmlight.png");
+    m_rgb_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/rgb_rawlight.png");
+    m_rgb_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/rgb_rawlight.png");
     m_depth_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/depth.png");
     m_depth_image_empty = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/empty/depth.png");
     m_segmentation_image = QString("C:/Users/magus/spider-viewer/s3d/") + scene + QString("/panorama/full/semantic.png");
@@ -294,7 +297,10 @@ void GLWindow::load_scene(const QString& scene)
     QImage img(m_rgb_image);
     Q_ASSERT(!img.isNull());
     qDebug() << "read RGB full image in  " << m_rgb_image;
-    m_texture_rgb = new QOpenGLTexture(img.mirrored());
+   // glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,1);
+    m_texture_rgb = new QOpenGLTexture(img.mirrored(),QOpenGLTexture::GenerateMipMaps);
+    m_texture_rgb->setMinMagFilters(QOpenGLTexture::LinearMipMapLinear,QOpenGLTexture::Linear);
+   //m_texture_rgb->generateMipMaps();
 
     if (m_texture_rgb_empty) {
         delete m_texture_rgb_empty;
@@ -304,8 +310,9 @@ void GLWindow::load_scene(const QString& scene)
     QImage img_empty(m_rgb_image_empty);
     Q_ASSERT(!img_empty.isNull());
     qDebug() << "read RGB norm image in  " << m_rgb_image_empty;
-    m_texture_rgb_empty = new QOpenGLTexture(img_empty.mirrored());
-
+    m_texture_rgb_empty = new QOpenGLTexture(img_empty.mirrored(),QOpenGLTexture::GenerateMipMaps);
+    m_texture_rgb_empty->setMinMagFilters(QOpenGLTexture::LinearMipMapLinear,QOpenGLTexture::Linear);
+    //m_texture_rgb_empty->generateMipMaps();
 
 
     if (m_texture_rgb_norm) {
@@ -317,8 +324,6 @@ void GLWindow::load_scene(const QString& scene)
     Q_ASSERT(!img_norm.isNull());
     qDebug() << "read RGB norm image in  " << m_rgb_image_norm;
     m_texture_rgb_norm = new QOpenGLTexture(img_norm.mirrored());
-
-
 
 
     //******* initialize
@@ -399,7 +404,7 @@ void GLWindow::initializeGL()
     QImage img(m_rgb_image);
     Q_ASSERT(!img.isNull());
     qDebug() << "read RGB full image in  " << m_rgb_image;
-    m_texture_rgb = new QOpenGLTexture(img.mirrored());
+    m_texture_rgb = new QOpenGLTexture(img.mirrored(),QOpenGLTexture::GenerateMipMaps);
 
     if (m_texture_rgb_empty) {
         delete m_texture_rgb_empty;
@@ -409,8 +414,8 @@ void GLWindow::initializeGL()
     QImage img_empty(m_rgb_image_empty);
     Q_ASSERT(!img_empty.isNull());
     qDebug() << "read RGB norm image in  " << m_rgb_image_empty;
-    m_texture_rgb_empty = new QOpenGLTexture(img_empty.mirrored());
-
+    m_texture_rgb_empty = new QOpenGLTexture(img_empty.mirrored(),QOpenGLTexture::GenerateMipMaps);
+    m_texture_rgb_empty->setMinMagFilters(QOpenGLTexture::LinearMipMapLinear,QOpenGLTexture::Linear);
 
 
     if (m_texture_rgb_norm) {
@@ -511,6 +516,8 @@ void GLWindow::initializeGL()
     m_pickColors = m_program->uniformLocation("pickColor");
     m_blendFactorLoc = m_program->uniformLocation("blendFactor");
     m_normalEnabledLoc = m_program->uniformLocation("normalEnabled");
+
+    m_signalLoc = m_program->uniformLocation("signal");
 
     // Create a VAO. Not strictly required for ES 3, but it is for plain OpenGL.
 
@@ -683,8 +690,10 @@ void GLWindow::draw_scene(const QVector3D& eye, const QVector3D& target, bool em
     m_program->setUniformValue(m_normalEnabledLoc, m_normal_enabled ? 1 : 0);
     m_program->setUniformValue(m_camMatrixLoc, camera);
     m_program->setUniformValue(m_worldMatrixLoc, m_world);
-    m_program->setUniformValue(m_lightPosLoc, QVector3D(0, 200.0, 0.0f));
+    m_program->setUniformValue(m_lightPosLoc, QVector3D(0.0, 100000.0, 0.0f));
     m_program->setUniformValue(m_enableLightingLoc, m_lighting_enabled? 1: 0);
+    m_program->setUniformValue(m_signalLoc, m_signal);
+
 
     m_program->setUniformValue(m_pickedObjectCount, m_picked_object_count);
     m_program->setUniformValueArray(m_pickColors, (const GLfloat*)(&m_pick_colors[0][0]), int(m_pick_colors.size())*3, 3);
@@ -719,7 +728,7 @@ void GLWindow::draw_scene(const QVector3D& eye, const QVector3D& target, bool em
     m_vao->release();
 
     // The position of the object is a new field, called m_object_position
-    if (empty && m_draw_cube_enabled && m_depth_enabled) draw_cube(camera, QVector3D(50.0,-100.0,-400.0f), QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(50.0f, 50.0f, 50.0f) );
+    if (empty && m_draw_cube_enabled && m_depth_enabled) draw_cube(camera, m_object_position, QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(50.0f, 50.0f, 50.0f) );
     if (empty && m_draw_obj_enabled && m_depth_enabled) draw_obj(camera, m_object_position, QVector3D(0.0,1.0,0.0), 0.0f, QVector3D(1.0f, 1.0f, 1.0f) );
 
     //f->glDrawArraysInstanced(GL_TRIANGLES, 0, m_logo.vertexCount(), 32 * 36);
@@ -1038,7 +1047,7 @@ void GLWindow::draw_cube(const QMatrix4x4& camera, const QVector3D& pos, const Q
     // bind buffer storing positions
     m_cube_vbo->bind();
     m_cube_ibo->bind();
-
+    m_texture_rgb_empty->bind(2);
 
     m_world.setToIdentity();
 
@@ -1053,7 +1062,7 @@ void GLWindow::draw_cube(const QMatrix4x4& camera, const QVector3D& pos, const Q
 
     f->glDrawElements( GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr );
 
-
+    m_texture_rgb_empty->release();
     m_cube_ibo->release();
     m_cube_vbo->release();
     m_world.setToIdentity();
@@ -1071,7 +1080,7 @@ void GLWindow::draw_obj(const QMatrix4x4& camera, const QVector3D& pos, const QV
     m_obj_vbo->bind();
     m_obj_ibo->bind();
 
-
+    m_texture_rgb_empty->bind(2);
     m_world.setToIdentity();
 
     //model.rotate(rot_angle, rot_axis);
@@ -1086,6 +1095,7 @@ void GLWindow::draw_obj(const QMatrix4x4& camera, const QVector3D& pos, const QV
     f->glDrawElements( GL_TRIANGLES, m_obj_index_count, GL_UNSIGNED_INT, nullptr );
 
 
+    m_texture_rgb_empty->release();
     m_obj_ibo->release();
     m_obj_vbo->release();
     m_world.setToIdentity();
@@ -1271,6 +1281,9 @@ void GLWindow::keyPressEvent(QKeyEvent *ev) {
 
     } break;
 
+   case Qt::Key_Z: {
+        m_signal = (m_signal+1)%3;
+    } break;
 
     case Qt::Key_V: {
         m_mixed_view_norm_enabled = !m_mixed_view_norm_enabled;
@@ -1306,6 +1319,7 @@ void GLWindow::keyPressEvent(QKeyEvent *ev) {
         case Qt::Key_X: {
            m_stereo_norm_enabled = !m_stereo_norm_enabled;
         } break;
+
 
 
         case Qt::Key_W: {

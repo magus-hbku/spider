@@ -7,12 +7,17 @@ out vec4 vert;
 out vec2 tex;
 out vec3 norm;
 out vec3 col;
+out vec3 p_wc;
+out vec3 n_wc;
+
 
 uniform int pickedObjectCount;
 uniform int  depthEnabled;
 uniform int  textureEnabled;
 uniform int  normalEnabled;
 uniform int  full;
+uniform int  signal;
+
 
 uniform float depthMax;
 uniform mat4 projMatrix;
@@ -53,10 +58,20 @@ void main() {
    }
 
    if (textureEnabled != 0) {
-      if (full != 0 || found_picked != 0) {
-         c.rgb =  texture(sampler, texel).rgb;
-      } else {
-         c.rgb =  texture(samplerEmpty, texel).rgb;
+      if (signal == 0) {
+        if (full != 0 || found_picked != 0) {
+           c.rgb =  texture(sampler, texel).rgb;
+        } else {
+           c.rgb =  texture(samplerEmpty, texel).rgb;
+        }
+      } else if (signal == 1) {
+           c.rgb =  texture(samplerSeg, texel).rgb;
+      } else if (signal == 2) {
+        if (full != 0 || found_picked != 0) {
+           c.rgb =  texture(samplerNorm, texel).rgb;
+        } else {
+           c.rgb =  texture(samplerNormEmpty, texel).rgb;
+        }
       }
    }
 
@@ -83,5 +98,7 @@ void main() {
    col = c;
    tex = texel;
    //vert = projMatrix * camMatrix * worldMatrix * v;
+   p_wc = (worldMatrix*v).xyz;
+   n_wc = norm;
    gl_Position = projMatrix * camMatrix * worldMatrix * v;
 }
